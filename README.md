@@ -1,3 +1,5 @@
+![Thumbnail](images/cms-exfiltration-poc-thumbnail.png)
+
 # Competitive Programming Data Exfiltration PoC
 
 This repository contains a Proof-of-Concept (PoC) demonstrating how sensitive test data can be exfiltrated from competitive programming autograders (like CMS) using side channels.
