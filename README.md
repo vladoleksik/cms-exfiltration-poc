@@ -9,25 +9,32 @@ In competitive programming, test cases are kept secret to ensure participants wr
 ### Attack Strategy
 
 The attack is applicable mainly in problems where solutions are heavily compute-bound, with input sizes relatively small compared to compute needed by the program.
-
-![Proof of Concept problem statement](images/statement-presentation.png)
+<p align="center">
+  <img src="images/statement-presentation.png" width="40%">
+</p>
 
 The goal, for this proof of concept, is to extract a 196-bit secret number (e.g., a large RSA-style integer to be factored). For this statement, at the time of writing this, it is known that no efficient algorithm exists to factor such numbers within the constraints specified above.
 
 Given a limit of 30 attempts, the attack exfiltrates approximately 7 bits per submission.
 
-![Bit exfiltration per submission](images/exfiltration-scheme.png)
+<p align="center">
+  <img src="images/exfiltration-scheme.png" width="70%">
+</p>
 
 1. **Bit Grouping**: Each submission (attempt) targets a specific 7-bit window of the secret input.
 
-![Rolling 7-bit window over the secret input](images/exfiltration-window-case.png)
+<p align="center">
+  <img src="images/exfiltration-window-case.png" width="70%">
+</p>
 
 2. **The Memory Side-Channel (5 bits)**:
 * The 5 most significant bits of the targeted window are mapped to a value between 0 and 31.
 * The program allocates memory proportional to this value (e.g., in 8MiB increments).
 * By reading the "Memory Used" in the grader feedback, the attacker recovers these 5 bits.
 
-![Memory usage mapping to 5 bits](images/exfiltration-group-2-memory.png)
+<p align="center">
+  <img src="images/exfiltration-group-2-memory.png" width="70%">
+</p>
 
 3. **The Verdict Side-Channel (2 bits)**:
 The 2 least significant bits are mapped to four possible exit statuses:
@@ -36,7 +43,9 @@ The 2 least significant bits are mapped to four possible exit statuses:
 * `10` -> **MAV** (Memory Access Violation): Triggered by a null pointer dereference.
 * `11` -> **TLE** (Time Limit Exceeded): Triggered by an infinite `while(true)` loop.
 
-![Verdict mapping to 2 bits](images/exfiltration-group-1-verdict.png)
+<p align="center">
+  <img src="images/exfiltration-group-1-verdict.png" width="70%">
+</p>
 
 ## Implementation Details
 The implementation in [`src/main.cpp`](src/main.cpp) follows these steps:
@@ -46,13 +55,21 @@ The implementation in [`src/main.cpp`](src/main.cpp) follows these steps:
 * **Memory Allocation**: Calls `v.resize()` with a calculated size to ensure the memory usage is reported by the grader.
 * **Verdict Triggering**: Executes the specific exit strategy to produce the desired verdict.
 
-![Feedback exfiltration process](images/exfiltration-realtime.png)
-<center>Example of feedback received from CMS after a submission.</center>
+<p align="center">
+  <img src="images/exfiltration-realtime.png" width="70%">
+</p>
+<p align="center">
+  Example of feedback received from CMS after a submission.
+</p>
 
 After all the bits are exfiltrated, they are combined to reconstruct the original secret input cases. These can be processed further as needed (e.g., factoring the large integer), locally, with no performance constraints. The outputs for the test cases are hardcoded in the submission in a `switch` statement that produces the correct result for each test case.
 
-![Successful extraction of the secret input](images/exfiltration-outcome.png)
-<center>Full points achieved after hardcoding the outputs for the extracted test cases.</center>
+<p align="center">
+  <img src="images/exfiltration-outcome.png" width="70%">
+</p>
+<p align="center">
+  Full points achieved after hardcoding the outputs for the extracted test cases.
+</p>
 
 ## Reproducibility
 > [!IMPORTANT]
@@ -71,14 +88,18 @@ P.S. It is worth mentioning that CMS warns the admin of the risks of malicious p
 > When using a single machine, with the total machine memory set to `2048MiB` and the per-test-case memory to `1024MiB`, problems will arise, as there are 16 worker processes that, by default, in CMS, work in parallel to queue up test case evaluations when the contestants submit solutions. When multiple workers run on the same machine, this can not only occasionally cause crashes, but will also consistently affect the reported memory usage of each test and, thus, the exfiltration.
 > By disabling all but one worker process, it will get the entire memory pie and, despite taking more physical time, serialising the evaluation will produce much more reliable results, emulating ‘professional’ configurations of CMS, spanning an entire network of single-worker machines, at the only cost of not being able to support multiple contestants at the same time as easily.
 
-![Disabling multiple workers in CMS](images/reproducibility-workers.png)
+<p align="center">
+  <img src="images/reproducibility-workers.png" width="70%">
+</p>
 
 ## Possible improvements
 * **Increased Bitrate**: Explore more granular memory allocation strategies or higher domain sizes to increase bits extracted per submission.
 * **Error Correction**: Implement error-correcting codes to mitigate potential inaccuracies in memory usage reporting.
 * **Adaptive Strategies**: Develop adaptive submission strategies based on previous feedback to optimize bit extraction.
 
-![Possible improvements diagram](images/improvements.png)
+<p align="center">
+  <img src="images/improvements.png" width="70%">
+</p>
 
 ## Ethical Disclaimer
 > [!NOTE]
